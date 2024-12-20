@@ -3,28 +3,25 @@ class MessageHandler {
     this.llmService = llmService;
   }
 
-  async handleMessage(message) {
-    if (message.author.bot || !message.content.startsWith("!ask")) return;
-
-    const userMessage = message.content.slice(4).trim();
-
-    if (!userMessage) {
-      await message.reply("Please provide a question or topic after `!ask`.");
-      return;
-    }
-
-    await message.channel.sendTyping();
+  async handleInteraction(interaction, userMessage) {
+    await interaction.channel.sendTyping();
     const response = await this.llmService.generateResponse(
-      message.author.id,
+      interaction.user.id,
       userMessage,
     );
 
     // Split response into chunks only if it exceeds 2000 characters
-    const chunks = this.splitMessage(response, 2000);
+    return this.splitMessage(response, 2000);
+  }
 
-    for (const chunk of chunks) {
-      await message.reply(chunk);
-    }
+  async handleDM(message) {
+    const response = await this.llmService.generateResponse(
+      message.author.id,
+      message.content,
+    );
+
+    // Split response into chunks only if it exceeds 2000 characters
+    return this.splitMessage(response, 2000);
   }
 
   splitMessage(text, maxLength) {
